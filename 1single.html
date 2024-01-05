@@ -21,7 +21,12 @@ layout: page
         throw new Error("Server response not OK");
       }
 
-      const label = json['data'][0]['confidences'][0]['label'];
+      // Check if the expected properties exist in the response
+      if (!json || !json.data || !json.data[0] || !json.data[0].confidences || !json.data[0].confidences[0]) {
+        throw new Error("Unexpected response structure");
+      }
+
+      const label = json.data[0].confidences[0].label;
       results.innerHTML = `<br/><img src="${reader.result}" width="300"> <p>${label}</p>`;
     } catch (error) {
       console.error("Error:", error);
