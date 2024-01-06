@@ -5,38 +5,23 @@ layout: page
 
 <input id="photo" type="file">
 <div id="results"></div>
+<script src="https://unpkg.com/@gradio/client"></script>
 <script>
   async function loaded(reader) {
-    try {
-      const response = await fetch("https://chickenmcswag-fastail2.hf.space/--replicas/un439/predict", {
-        method: "POST",
-        body: JSON.stringify({ "data": [reader.result.split(',')[1]] }), // send base64 string without data URL prefix
-        headers: { "Content-Type": "application/json" }
-      });
+    const exampleImage = new Blob([reader.result], { type: 'image/jpg' });
+    
+    const app = await gradio.client("https://chickenmcswag-fastail2.hf.space/--replicas/un439/");
+    const result = await app.predict("/predict", [
+      exampleImage,  // blob in 'img' Image component
+    ]);
 
-      const json = await response.json();
-      console.log("Server Response:", json);
-
-      if (!response.ok) {
-        throw new Error("Server response not OK");
-      }
-
-      // Check if the expected properties exist in the response
-      if (!json || !json.data || !json.data[0] || !json.data[0].confidences || !json.data[0].confidences[0]) {
-        throw new Error("Unexpected response structure");
-      }
-
-      const label = json.data[0].confidences[0].label;
-      results.innerHTML = `<br/><img src="${reader.result}" width="300"> <p>${label}</p>`;
-    } catch (error) {
-      console.error("Error:", error);
-    }
+    console.log(result.data);
   }
 
   function read() {
     const reader = new FileReader();
     reader.addEventListener('load', () => loaded(reader));
-    reader.readAsDataURL(photo.files[0]);
+    reader.readAsArrayBuffer(photo.files[0]);
   }
 
   const photo = document.getElementById("photo");
